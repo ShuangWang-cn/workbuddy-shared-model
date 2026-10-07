@@ -1,0 +1,5 @@
+# 注册 WorkBuddy 共享 provider，不改动 profile 的默认模型。
+# 插件用 workbuddy共享工具产出的 WorkBuddy Key 直连上游，无需 WorkBuddy 桌面端登录态。
+- insert:
+    - id: workbuddy-llm
+      name: workbuddy-llm

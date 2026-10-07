@@ -1,0 +1,41 @@
+# ---- 凭据与密钥：绝对不能提交 ----
+*.key
+*-token*.txt
+*token*.txt
+*.env
+.env
+!示例.env.example
+
+# ---- 编译产物 ----
+dist/
+build/
+*.spec.bak
+*.exe
+!示例*.exe
+
+# ---- 备份与旧存档 ----
+*.bak
+*.bak-*
+_旧存档/
+备份/
+
+# ---- 插件依赖 ----
+node_modules/
+plugin/**/node_modules/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ---- 编辑器/系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 日志与临时 ----
+*.log
+*.tmp

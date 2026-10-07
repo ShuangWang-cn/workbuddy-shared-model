@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>WBBridgeConfig · WorkBuddy 第三方工具接入助手</title>
+<style>
+  :root{
+    --pri:#2563eb; --pri2:#4fc3f7; --cyan:#0e9f9f;
+    --bg:#f4f6fa; --panel:#ffffff; --ink:#1f2b3a; --sub:#6b7c93; --line:#dbe7f5;
+    --ok:#0f9d68; --warn:#b26a00; --err:#d92d2d;
+    --fill:#f7fbff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif;}
+  /* ---------- 顶部标题条 ---------- */
+  .top{display:flex;align-items:center;gap:14px;padding:12px 18px;
+       background:linear-gradient(90deg,var(--pri) 0%,var(--pri2) 70%,var(--cyan) 100%);
+       color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.18)}
+  .top h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.5px}
+  .top .sub{font-size:12.5px;opacity:.92}
+  .top .sp{flex:1}
+  .top .pill{font-size:12px;background:rgba(255,255,255,.22);border-radius:20px;padding:4px 12px}
+  .wrap{max-width:1120px;margin:0 auto;padding:16px 18px 46px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+        padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(16,40,70,.05)}
+  /* ---------- 解析区：解析完自动收缩成一条（省掉一屏滚动） ---------- */
+  #resolveBox{text-align:center;padding:24px 18px 20px}
+  #resolveBox.done{text-align:left;padding:9px 16px;display:flex;align-items:center;gap:10px}
+  #resolveBox.done h2,#resolveBox.done .hint,#resolveBox.done #prog,#resolveBox.done #errBox{display:none}
+  #resolveBox.done .bigbtn{min-width:0;padding:6px 14px;font-size:13px}
+  .bigbtn{display:inline-block;min-width:280px;padding:14px 30px;border:0;border-radius:8px;cursor:pointer;
+          font-size:16px;font-weight:700;color:#fff;
+          background:linear-gradient(90deg,var(--pri),var(--cyan));
+          box-shadow:0 6px 16px rgba(37,99,235,.28);transition:.15s}
+  .bigbtn:hover{filter:brightness(1.08)}
+  .bigbtn:disabled{opacity:.6;cursor:not-allowed;box-shadow:none}
+  .bigbtn.sm{background:var(--pri);box-shadow:none}
+  .prog{margin-top:14px;height:22px;color:var(--sub);font-size:13px}
+  .prog b{color:var(--pri)}
+  .dots:after{content:"…";animation:dots 1.2s steps(4,end) infinite}
+  @keyframes dots{0%{content:""}25%{content:"·"}50%{content:"··"}75%{content:"···"}}
+  /* ---------- 结果概览（横排，一眼看完） ---------- */
+  .ov{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:9px}
+  .ov .it{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 11px}
+  .ov .k{font-size:11.5px;color:var(--sub)}
+  .ov .v{font-size:13.5px;font-weight:600;margin-top:2px;word-break:break-all}
+  /* ---------- 警示条 ---------- */
+  .tip{border-radius:8px;padding:10px 14px;margin:12px 0;font-size:12.5px;line-height:1.7}
+  .tip.warn{background:#fff8e6;border:1px solid #f2d38a;color:#7a5300}
+  .tip.info{background:#eef6ff;border:1px solid #c7ddf7;color:#1c4a80}
+  .tip.err{background:#fff1f1;border:1px solid #f4bdbd;color:#9b1c1c;white-space:pre-wrap;text-align:left}
+  /* ---------- 卡签 ---------- */
+  .tabs{display:flex;gap:6px;border-bottom:2px solid var(--line);margin:2px 0 0}
+  .tab{padding:10px 22px;cursor:pointer;font-size:14px;font-weight:600;color:var(--sub);
+       border:1px solid transparent;border-bottom:none;border-radius:8px 8px 0 0;background:transparent}
+  .tab:hover{color:var(--pri)}
+  .tab.on,.stab.on{color:var(--pri);background:#fff;border-color:var(--line);border-bottom:2px solid var(--pri);margin-bottom:-2px}
+  .tab-panels{padding:0}
+  .panel{display:none;padding-top:14px}
+  .panel.on{display:block}
+  /* ---- 第二层卡签：AI 配置指令里按「配到哪个程序」再分一页 ---- */
+  /* 做成真·标签页样子：一条浅灰底座 + 每页一个凸起的白/灰卡片，选中的那张压到底座上、顶边描主色 */
+  .tabs.sub{display:flex;gap:4px;align-items:flex-end;background:#e9eef4;
+            border-radius:11px 11px 0 0;padding:7px 7px 0;margin:16px 0 0;
+            border-bottom:1px solid #dbe2ea}
+  .tabs.sub .stab{position:relative;cursor:pointer;user-select:none;
+            padding:9px 20px 10px;font-size:13px;font-weight:700;letter-spacing:.2px;
+            color:#5d6a78;background:#dde5ed;border:1px solid transparent;border-bottom:none;
+            border-radius:10px 10px 0 0;transition:background .12s,color .12s}
+  .tabs.sub .stab:hover{color:var(--pri);background:#e5edf5}
+  .tabs.sub .stab.on{background:#fff;color:var(--pri);border-color:#dbe2ea;
+            box-shadow:inset 0 3px 0 var(--pri)}
+  .tabs.sub .stab .no{display:inline-block;min-width:18px;height:18px;line-height:18px;
+            margin-right:7px;border-radius:9px;background:#c1cedc;color:#fff;
+            font-size:10.5px;font-weight:700;text-align:center;vertical-align:1px}
+  .tabs.sub .stab.on .no{background:var(--pri)}
+  .ap{display:none;padding:14px 2px 2px}
+  .ap.on{display:block}
+  #aiPanels+.tip{margin-top:10px}
+  .bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+  .btn{padding:8px 16px;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:pointer;
+       font-size:13px;font-weight:600;color:var(--ink)}
+  .btn:hover{border-color:var(--pri);color:var(--pri)}
+  .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+  .btn.pri:hover{filter:brightness(1.08);color:#fff}
+  textarea{width:100%;height:360px;border:1px solid var(--line);border-radius:8px;padding:12px;
+           font:12.5px/1.7 "Cascadia Mono",Consolas,"Microsoft YaHei",monospace;
+           background:#fbfdff;color:var(--ink);resize:vertical;white-space:pre}
+  /* ---------- 通用小按钮 ---------- */
+  .mini{font-size:11px;border:1px solid var(--line);background:#fff;border-radius:5px;padding:2px 9px;cursor:pointer;color:var(--sub);white-space:nowrap}
+  .mini:hover{border-color:var(--pri);color:var(--pri)}
+  .mini.b{border-color:#cfe0ff;background:#f5f9ff;color:var(--pri)}
+  /* ---------- 区块小标题（第 N 步） ---------- */
+  .sec{display:flex;align-items:center;gap:10px;margin:20px 0 10px}
+  .sec:first-child{margin-top:2px}
+  .sec .no{flex:none;width:22px;height:22px;border-radius:6px;background:var(--pri);color:#fff;
+           font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .sec .tt{font-size:14px;font-weight:700}
+  .sec .n{font-size:12px;color:var(--sub)}
+  .sec .bar{margin-left:auto;margin-bottom:0}
+  /* ---------- 供应商表单：短的两项并排一行，长值（Key）独占一行 ---------- */
+  .form{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;
+        display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+  .fl.wide{grid-column:1/-1}
+  .fl{display:grid;grid-template-columns:22px 152px 1fr auto;align-items:center;gap:11px;
+      padding:9px 13px;border-bottom:1px solid var(--line)}
+  .fl:last-child{border-bottom:none}
+  .fl:hover{background:var(--fill)}
+  .fl .no{width:20px;height:20px;border-radius:5px;background:#eaf1fb;color:var(--pri);
+          font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .fl .lb{font-size:12.5px;font-weight:700}
+  .fl .lb em{font-style:normal;color:var(--err);font-size:11px;margin-left:5px}
+  .fl .tip{grid-column:2/-1;font-size:11px;color:var(--sub);margin-top:-3px;line-height:1.5}
+  .fl .ops{display:flex;align-items:center;gap:6px}
+  input.ro{width:100%;border:1px solid var(--line);background:#fbfdff;border-radius:6px;padding:7px 10px;
+           font:12.5px/1.5 Consolas,monospace;color:#0a3d70;outline:none}
+  input.ro:focus{border-color:var(--pri);background:#fff}
+  /* ---------- 模型表（第 2 步） ---------- */
+  .mbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+  .mbar input[type=text]{width:210px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12.5px;outline:none}
+  .mbar input[type=text]:focus{border-color:var(--pri)}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);cursor:pointer;
+       border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:#fff}
+  .chk input{margin:0}
+  .mbar .cnt{font-size:12px;color:var(--sub);margin-left:auto}
+  .mwrap{border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:400px}
+  table.mt{border-collapse:collapse;width:100%;font-size:12.5px}
+  table.mt th{background:#eef4fb;color:var(--pri);font-weight:700;padding:7px 10px;text-align:left;
+              border-bottom:1px solid var(--line);position:sticky;top:0;white-space:nowrap;z-index:1}
+  table.mt td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  table.mt tbody tr:nth-child(even) td{background:#fafdff}
+  table.mt tbody tr:hover td{background:#eef6ff!important}
+  table.mt td.id{font:12px Consolas,monospace;color:#0a5;white-space:nowrap}
+  table.mt td.nm{font-weight:600;white-space:nowrap}
+  table.mt td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--sub)}
+  table.mt tr.off td.id,table.mt tr.off td.nm{color:#9aa7b7}
+  table.mt .tag{display:inline-block;font-size:10.5px;border:1px solid var(--line);border-radius:4px;
+                padding:0 4px;margin-right:3px;color:#98a6b8}
+  table.mt .tag.y{border-color:#9ad9b6;background:#eafaf1;color:#0b7a51}
+  table.mt td.ops{white-space:nowrap}
+  table.mt .yes{color:var(--ok);font-weight:700}
+  details.q{border:1px solid var(--line);border-radius:8px;background:#fbfdff;padding:8px 12px;margin-top:12px;font-size:12.5px}
+  details.q summary{cursor:pointer;color:var(--pri);font-weight:600;font-size:12.5px}
+  details.q .body{color:var(--sub);line-height:1.8;margin-top:7px}
+  /* ---------- 复制提示：全局 toast ---------- */
+  #toast{position:fixed;right:22px;bottom:22px;z-index:99;background:#1f2b3a;color:#fff;
+         font-size:13px;padding:9px 16px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.22);
+         opacity:0;pointer-events:none;transition:.18s;transform:translateY(6px);max-width:70vw}
+  #toast.on{opacity:1;transform:translateY(0)}
+  .ok{color:var(--ok);font-size:12px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>WBBridgeConfig</h1>
+  <span class="sub">WorkBuddy 登录态 → 第三方 AI 工具接入助手</span>
+  <span class="sp"></span>
+  <span class="pill" id="topPill">未解析</span>
+</div>
+
+<div class="wrap">
+  <!-- ============ 解析区（首屏只有这一个按钮） ============ -->
+  <div class="card" id="resolveBox">
+    <h2>本机 WorkBuddy 解析</h2>
+    <div class="hint">点一下，程序自己去找机器上装着的 WorkBuddy、解出登录态、拉模型目录。</div>
+    <button class="bigbtn" id="btnGo">开始解析 WorkBuddy</button>
+    <div class="prog" id="prog"></div>
+    <div id="errBox"></div>
+  </div>
+
+  <div id="after" style="display:none">
+    <!-- 桥端口被别的进程占着时的醒目提示（两个进程抢同一端口 = 时通时断） -->
+    <div class="card" id="portTip" style="display:none;padding:10px 16px">
+      <div class="tip warn" style="margin:0">
+        ⚠ <b>桥端口 18791 已经被别的程序占着了。</b>同一时间只准有一个桥
+        （旧的独立转发层 / 另一个 WBBridgeConfig / 另一个本程序窗口）。
+        两个进程抢同一个端口，第三方工具的请求会<b>随机落一个，表现得时通时断</b>。
+        请把另一个关掉，再点一次「解析 WorkBuddy」。
+      </div>
+    </div>
+
+    <!-- ① 先给一眼概览，再进下面两块 -->
+    <div class="card" id="ovCard" style="padding:12px 16px">
+      <div class="ov" id="ov"></div>
+    </div>
+
+    <!-- 卡签 -->
+    <div class="tabs">
+      <div class="tab on" data-t="ai">AI 配置指令</div>
+      <div class="tab" data-t="manual">自定义模型配置</div>
+    </div>
+    <div class="card tab-panels">
+      <!-- AI 配置指令：按「要配到哪个程序」分一页，点哪页出哪个程序的完整配置说明书 -->
+      <div class="panel on" id="p-ai">
+        <div class="tip info" style="margin:0 0 2px">
+          点「生成配置指令」出整段文字 → <b>复制全文粘贴到你正在用的 WorkBuddy 对话框</b>，
+          它会拿着上面这些真实值，去帮你把本机那个第三方 AI 工具的自定义模型配好，并真发一次请求验通。
+          不区分具体是哪款工具：换工具变的只是「往哪儿写」，<b>要填的永远是这一套值</b>。
+        </div>
+        <div class="tabs sub" id="aiTabs"></div>
+        <div id="aiPanels"></div>
+      </div>
+
+      <!-- ② 自定义模型配置：按「照着填」的顺序排（第1步供应商 → 第2步挑模型 → 第3步全清单） -->
+      <div class="panel" id="p-manual">
+        <div class="tip warn" style="margin:0 0 2px">
+          ⚠ 这一页是明文密钥，只在本机用，别发出去。值框都能点右边「复制」。部分AI工具不支持自定义供应商/模型的可能会出错无法访问等问题。
+        </div>
+
+        <!-- ===== 第 1 步：供应商（先填这 5 项） ===== -->
+        <div class="sec">
+          <span class="no">1</span><span class="tt">供应商</span>
+          <span class="n">5 项，所有模型共用，一次填完就别改了</span>
+        </div>
+        <div class="form" id="pfBox"></div>
+        <!-- ===== 第 2 步：全部可用模型 ===== -->
+        <div class="sec">
+          <span class="no">2</span><span class="tt">可用模型全清单</span>
+          <span class="n" id="mAll"></span>
+        </div>
+        <div class="mbar">
+          <span class="cnt" id="mCnt"></span>
+        </div>
+        <div class="tip info" style="margin:6px 0">
+          标「思」的是<b>思考型模型</b>：客户端里 max_tokens 要给够（建议 ≥300），
+          否则预算全被思考链吃掉，正文一个字都出不来。<br>
+          一律用左边这一列<b>模型 ID</b>，别用记忆里或别人转述的名字——同一个模型两种叫法，跑的可能是另一个。
+        </div>
+        <div class="mwrap">
+          <table class="mt">
+            <thead><tr>
+              <th>模型ID</th><th>模型名称</th><th>倍率</th><th>输入</th><th>输出</th><th>图片输入</th><th>思考</th><th id="thRoster">名单</th>
+            </tr></thead>
+            <tbody id="mBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tip info">
+      ⚠ Key 是<b>动态的</b>：WorkBuddy 一换登录态它就跟着变，变了回来点上面「解析 WorkBuddy」按钮再跑一次。
+      另外建议 <b>WorkBuddy 桌面端一直开着</b>，登录态在有效期里就一直能用。
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+const S = { data:null, ai:'' };
+
+/* ---------------- 小工具 ---------------- */
+function post(p, body){ return fetch(p,{method:'POST',body:body||''}).then(r=>r.json()); }
+function get(p){ return fetch(p).then(r=>r.json()); }
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s){ return esc(s).replace(/"/g,'&quot;'); }
+
+let tmr;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(tmr); tmr = setTimeout(()=>t.classList.remove('on'), 2000);
+}
+function copyText(txt, okMsg){
+  const done = ok => toast(ok ? (okMsg||'已复制 ✔') : '复制失败，请点一下框全选后 Ctrl+C');
+  try{ navigator.clipboard.writeText(txt).then(()=>done(true)); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); let ok=false; try{ ok=document.execCommand('copy'); }catch(e2){}
+    document.body.removeChild(ta); done(ok);
+  }
+}
+
+/* ---------------- 解析 ---------------- */
+let busy=false;
+async function runResolve(){
+  if(busy) return; busy=true;
+  const b=$('#btnGo'); b.disabled=true; b.textContent='解析中…';
+  $('#after').style.display='none';
+  $('#errBox').innerHTML=''; $('#ov').innerHTML='';
+  $('#topPill').textContent='解析中';
+  const steps=['正在找本机 WorkBuddy…','正在读登录态文件…','正在解密钥…','正在拉模型目录…'];
+  let i=0; const iv=setInterval(()=>{ $('#prog').innerHTML='<b>'+steps[i%steps.length]+'</b><span class="dots"></span>'; i++; },450);
+  try{
+    const r = await get('/api/status');
+    if(!r.ok) throw new Error(r.err || '未知错误');
+    S.data = r.data;
+    const d = r.data;
+
+    const items = [
+      ['账号', d.account && (d.account.nickname || '(本机 WorkBuddy 账号)')],
+      ['能用的模型', (d.stats && d.stats.inRoster)+' 个'],
+      ['有效期：', d.credential && d.credential.expiresAt],
+      ['运行权限', d.admin ? '管理员（双击就带）' : '普通'],
+    ];
+    $('#ov').innerHTML = items.map(x=>
+      '<div class="it"><div class="k">'+esc(x[0])+'</div><div class="v">'+esc(x[1])+'</div></div>').join('');
+
+    /* 桥端口被别的进程占着 → 顶部红黄条（别让它悄悄时通时断） */
+    $('#portTip').style.display = (d.portTaken ? 'block' : 'none');
+
+    /* 把分段耗时摆出来：解密(借 WorkBuddy.exe 导出主密钥解信封) + 真联网拉模型目录。
+       联网那一步 > 0 才说明模型是现拉回来的，不是从本机别处扒的。 */
+    var tm = d.timings || {};
+    var cost = ' · 解析 ' + ((tm.total||0).toFixed(2)) + 's';
+    if(tm.net > 0) cost += '（联网 ' + (tm.net).toFixed(2) + 's）';
+    $('#topPill').textContent = '已解析 · ' + ((d.stats && d.stats.inRoster)||0) + ' 个模型' + cost;
+    $('#prog').innerHTML = '<span class="ok">✔ 解析完成，下面两块可以选了。</span>';
+    $('#resolveBox').classList.add('done');
+    b.textContent = '解析 WorkBuddy';
+    $('#after').style.display='block';
+    renderManual();
+    await loadTargets();
+    renderAiTabs();
+    /* 默认把 OpenCode 那一页生成出来（第一页），别让人点进去是空的 */
+    if(TG.length) genFor(TG[0].key);
+  }catch(e){
+    $('#errBox').innerHTML =
+      '<div class="tip err">'+esc(e.message||e)+'</div>'+
+      '<div class="tip" style="background:#fff;border-color:#f4bdbd;color:#9b1c1c">'+
+      '这次没读到密钥，<b>多半是少了一点权限</b>：WorkBuddy 的密钥要管理员才读得到。'+
+      '点下面这个按钮，电脑会问你一句「是否允许」，<b>点「是」</b>，程序会自动用管理员重开一次，以后就一直是了。'+
+      '<div style="margin-top:8px"><button class="btn" style="border-color:#f4bdbd;color:#9b1c1c" id="btnElev">以管理员身份重新运行</button></div></div>';
+    $('#btnElev').onclick = async ()=>{ const r=await post('/api/restart-admin'); toast(r.ok===true?'已请求提权，UAC 弹窗点「是」':'提权失败'); };
+    $('#topPill').textContent='解析失败';
+  }finally{
+    clearInterval(iv); b.disabled=false; busy=false;
+  }
+}
+
+/* ================= ② 自定义模型配置 ================= */
+let MD = null;
+
+function renderManual(){
+  const M = S.data.manual || { provider:[], models:[], stats:{} };
+  MD = M;
+  const nMod = (M.models && M.models.length) || 0;
+  $('#mAll').textContent = !nMod ? '没解析到模型'
+    : ('共 ' + nMod + ' 个，按倍率从低到高排，你自己挑');
+  renderProvider(M.provider || []);
+  renderModels();
+}
+
+/* --- 第 1 步：供应商 5 项（一字段一行，顺序即填表顺序） --- */
+function renderProvider(P){
+  $('#pfBox').innerHTML = P.map(function(f,i){
+    /* Key 默认就明文（老王 2026-10-05 定：他要直接从这一行复制明文贴给 WorkBuddy，
+       默认打码会拦住他；想遮挡时点「打码」按钮收起来） */
+    const inp = f.secret
+      ? '<input class="ro" id="pfv'+i+'" type="text" readonly value="'+escA(f.value)+'">'
+      : '<input class="ro" id="pfv'+i+'" type="text" readonly value="'+escA(f.value)+'">';
+    /* 长值（Key）自己占一整行，短的几项并排一行，别把一行拉得太长 */
+    return '<div class="fl'+(f.secret ? ' wide' : '')+'">'+
+      '<span class="no">'+f.n+'</span>'+
+      '<span class="lb">'+esc(f.label)+(f.must?'<em>必填</em>':'')+'</span>'+
+      inp+
+      '<span class="ops">'+
+        (f.secret ? '<button class="mini" id="pfe'+i+'">打码</button>' : '')+
+        /* 协议这类「下拉框选项」只展示，不给复制——复制回去粘不上，反而误导（老王 2026-10-05 定的） */
+        (f.noCopy ? '' : '<button class="mini b" data-pf="'+i+'">复制</button>')+
+      '</span>'+
+      (f.tip ? '<span class="tip">'+esc(f.tip)+'</span>' : '')+
+      (f.secret ? '<span class="tip">　<b>长度 '+String(f.value||'').length+'</b> '
+                  +'个字符——这么长是正常的 JWT，一拆一段，别截断别换行，原样复制就行。</span>' : '')+
+    '</div>';
+  }).join('');
+  P.forEach(function(f,i){
+    const cpBtn = $$('#pfBox [data-pf="'+i+'"]')[0];   /* 协议那行没复制按钮，得留个空 */
+    if(!cpBtn) return;
+    cpBtn.onclick = function(){
+      const el = $('#pfv'+i);
+      if(el.type === 'password') el.type = 'text';   // 想看就真的给看全
+      copyText(f.value, f.secret ? '已复制 Key（本机专用，别外传）✔' : '已复制 ✔');
+    };
+    if(f.secret){
+      $('#pfe'+i).onclick = function(){
+        const el = $('#pfv'+i), b = this;
+        const to = el.type === 'password' ? 'text' : 'password';
+        el.type = to; b.textContent = to === 'password' ? '显示' : '打码';
+      };
+    }
+  });
+}
+/* --- 第 2 步：全清单（默认只列名单内的） --- */
+function curRows(){
+  /* 数据层已经只给名单内的（能用的那一批），前端不再过滤 */
+  return (MD && MD.models) ? MD.models : [];
+}
+/* 按倍率从低到高（越前越省） */
+function sortRows(rows){
+  return rows.slice().sort(function(a,b){
+    const ma = parseFloat(String(a.mul||'').replace('x','')) || 9e9;
+    const mb = parseFloat(String(b.mul||'').replace('x','')) || 9e9;
+    return ma - mb || String(a.id).localeCompare(String(b.id));
+  });
+}
+function renderModels(){
+  const all = (MD && MD.models) ? MD.models.length : 0;
+  const rows = sortRows(curRows());
+  /* 全是名单内的就不摆「名单」这一列，省得占地方也少看一堆表头 */
+  const noRosterCol = !!(MD && MD.allRoster);
+  const th = document.getElementById('thRoster');
+  if(th) th.style.display = noRosterCol ? 'none' : '';
+  $('#mCnt').textContent = '显示 '+rows.length+' 个' + (all>rows.length ? (' / 共 '+all) : '');
+  $('#mBody').innerHTML = rows.map(function(m){
+    const cls = (m.roster ? '' : 'off ');
+    const tag = (on,txt)=> '<span class="tag'+(on?' y':'')+'">'+txt+(on?'✓':'✗')+'</span>';
+    return '<tr class="'+cls+'">'+
+      '<td class="id">'+esc(m.id)+' <button class="mini" data-cp="'+escA(m.id)+'">⧉</button></td>'+
+      '<td class="nm">'+esc(m.name)+' <button class="mini" data-cp="'+escA(m.name)+'">⧉</button></td>'+
+      '<td class="num">'+esc(m.mul)+'</td>'+
+      '<td class="num">'+esc(m.inTok)+' <button class="mini" data-cp="'+escA(m.inTok)+'">⧉</button></td>'+
+      '<td class="num">'+esc(m.outTok)+' <button class="mini" data-cp="'+escA(m.outTok)+'">⧉</button></td>'+
+      '<td>'+tag(m.img==='✓','图')+'</td>'+
+      '<td>'+tag(m.think==='✓','思')+'</td>'+
+      (noRosterCol ? '' :
+        '<td>'+(m.roster ? '<span class="yes">✓ 名单内</span>' : '<span class="no">—</span>')+'</td>')+
+    '</tr>';
+  }).join('') || '<tr><td colspan="'+(noRosterCol?7:8)+'" style="color:var(--sub);padding:14px">没解析到可用模型。</td></tr>';
+  $$('#mBody [data-cp]').forEach(function(btn){
+    btn.onclick = function(){ copyText(btn.dataset.cp, '已复制 ✔'); };
+  });
+}
+
+/* ---------------- AI 指令：按目标程序分页 ---------------- */
+/* 标签从 /api/targets 拿，以后加一个程序只要后端加一条，前端不用动。 */
+let TG = [];                       /* [{key,title,file}] */
+let AI = {};                       /* key -> 已生成的全文 */
+
+async function loadTargets(){
+  try{ const r = await get('/api/targets'); if(r.ok && r.targets && r.targets.length) TG = r.targets; }
+  catch(e){ TG = [{key:'generic', title:'通用（所有第三方 AI 工具）', file:'WorkBuddy接入第三方工具-配置指令.md'}]; }
+}
+
+function renderAiTabs(){
+  if(!TG.length) return;
+  $('#aiTabs').innerHTML = TG.map(function(t,i){
+    return '<div class="stab'+(i?'':' on')+'" data-a="'+t.key+'">'+
+             '<span class="no">'+(i+1)+'</span>'+esc(t.title)+'</div>';
+  }).join('');
+  $('#aiPanels').innerHTML = TG.map(function(t,i){
+    return '<div class="ap'+(i?'':' on')+'" data-a="'+t.key+'">'+
+      '<div class="bar">'+
+        '<button class="btn" data-copy="'+t.key+'">复制全文</button>'+
+        '<button class="btn" data-save="'+t.key+'">存到桌面</button>'+
+        '<span class="ok" id="aiMsg-'+t.key+'"></span>'+
+      '</div>'+
+      '<textarea id="ai-'+t.key+'" spellcheck="false" placeholder="切到本页即自动出全文，点「复制全文」复制后粘贴给 AI 工具。"></textarea>'+
+    '</div>';
+  }).join('');
+
+  /* 第二层卡签：只在这一块里换页，别去动外层那两个大卡签 */
+  $$('#aiTabs .stab').forEach(function(st){
+    st.onclick = function(){
+      $$('#aiTabs .stab').forEach(x=>x.classList.remove('on'));
+      $$('#aiPanels .ap').forEach(x=>x.classList.remove('on'));
+      st.classList.add('on');
+      const p = $('#aiPanels [data-a="'+st.dataset.a+'"]');
+      p.classList.add('on');
+      /* 切过去那一页如果还没生成，顺手生成，别让人对着空框 */
+      if(!AI[st.dataset.a]) genFor(st.dataset.a);
+    };
+  });
+  $$('#aiPanels [data-copy]').forEach(function(b){
+    b.onclick = function(){
+      const k = b.dataset.copy;
+      if(!AI[k]){ genFor(k).then(()=>copyText(AI[k], '已复制全文 ✔（去粘贴给 AI 工具）')); return; }
+      copyText(AI[k], '已复制全文 ✔（去粘贴给 AI 工具）');
+    };
+  });
+  $$('#aiPanels [data-save]').forEach(function(b){
+    b.onclick = function(){
+      const k = b.dataset.save;
+      (async function(){
+        if(!AI[k]) await genFor(k);
+        const r = await post('/api/save', JSON.stringify({body:AI[k], name:(TG.find(t=>t.key===k)||{}).file||''}));
+        if(r.ok) toast('已存到桌面 ✔');
+        else $('#aiMsg-'+k).textContent = '保存失败 '+r.err;
+      })();
+    };
+  });
+}
+
+async function genFor(key){
+  $('#aiMsg-'+key).textContent = '生成中…';
+  const r = await post('/api/agent?target='+encodeURIComponent(key));
+  if(!r.ok){ $('#aiMsg-'+key).textContent = '失败：'+(r.err||'?'); return; }
+  AI[key] = r.body; $('#ai-'+key).value = r.body;
+  $('#aiMsg-'+key).textContent = '已生成 ' + (r.body.length/1024).toFixed(1) + ' KB';
+}
+
+/* ---------------- 卡签 ---------------- */
+$$('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    $$('.tab').forEach(x=>x.classList.remove('on'));
+    $$('.panel').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); $('#p-'+t.dataset.t).classList.add('on');
+  };
+});
+
+/* ---------------- 起飞 ---------------- */
+$('#btnGo').onclick = runResolve;
+</script>
+</body>
+</html>
