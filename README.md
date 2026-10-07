@@ -2,29 +2,31 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-> **Let any AI tool spend your WorkBuddy credits.**
-> Connect DeepSeek Harness, OpenCode, Cursor, Cline and more to your WorkBuddy
-> account so they run on the same credits you already have.
+> **Use DeepSeek, OpenCode and Cursor with WorkBuddy's free daily credits.**
+> WorkBuddy hands out free credits every day. This bridge spends them on whatever
+> AI tool you already use — so your access costs almost nothing.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](README.md)
 
 ---
 
-## The problem
+## Why this exists
 
-You have WorkBuddy credits. But they only work inside WorkBuddy's own window.
-So you end up switching back and forth between WorkBuddy and whatever AI tool
-you actually prefer writing in.
+WorkBuddy gives you **free credits every day**. But you can only spend them inside
+WorkBuddy's own window.
 
-**This bridge removes that limitation.** It reads the WorkBuddy account
-already signed in on your computer and shares those credits with other AI
-tools — including the ones with no official WorkBuddy integration at all.
+So if you prefer writing in DeepSeek, OpenCode or Cursor, your free credits sit
+there unused while you pay for a subscription somewhere else.
+
+**This bridge moves those credits to where you actually work.** It shares your
+WorkBuddy credits with other AI tools — including ones with no WorkBuddy
+integration at all.
 
 ```
-  DeepSeek Harness┐
-  OpenCode           ├──►  this bridge  ──►  WorkBuddy credits
-  Cursor / Cline     ┘      (runs locally)      (your own account)
+  DeepSeek Harness   \
+  OpenCode            >  this bridge  -->  WorkBuddy credits
+  Cursor / Cline     /    (runs locally)      (your account, free daily)
 ```
 
 Nothing is uploaded. Your credentials never leave your machine.
@@ -35,9 +37,9 @@ Nothing is uploaded. Your credentials never leave your machine.
 
 | Tool | Status |
 |---|---|
-| **DeepSeek Harness** | ✅ Verified working |
-| **OpenCode** | ✅ Verified working |
-| Other OpenAI-compatible tools | 🔧 Adaptable — see the *General* tab in the app |
+| **DeepSeek Harness** | Verified working |
+| **OpenCode** | Verified working |
+| Other OpenAI-compatible tools | Adaptable — see the *General* tab in the app |
 
 ---
 

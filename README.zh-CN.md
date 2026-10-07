@@ -2,27 +2,27 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-> **让任何 AI 工具都能用上你的 WorkBuddy 积分。**
-> 把 DeepSeek Harness、OpenCode、Cursor、Cline 等接上你的 WorkBuddy 账号，
-> 用你本来就有���那份额度跑它们。
+> **用 WorkBuddy 的每日免费积分，跑 DeepSeek、OpenCode、Cursor。**
+> WorkBuddy 每天送免费积分，这座桥帮你把它花在你真正在用的 AI 工具上——几乎零成本。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](README.md)
 
 ---
 
-## 问题在哪
+## 为什么需要它
 
-你有 WorkBuddy 积分，但它只认 WorkBuddy 自己的窗口。
-于是你得在 WorkBuddy 和真正顺手写东西的那个 AI 工具之间来回切。
+WorkBuddy **每天送免费积分**，但这份额度**只能在 WorkBuddy 自己的窗口里花**。
 
-**这座桥就是去掉这个限制的。** 它读出你电脑上已登录的 WorkBuddy 账号，
-把那份积分分享给其他 AI 工具——包括那些**官方压根没支持 WorkBuddy** 的工具。
+于是如果你习惯在 DeepSeek、OpenCode、Cursor 里写代码，**免费积分就这么躺着**，你还得在别处另外花钱订阅。
+
+**这座桥把积分搬到你真正干活的地方。** 它把你自己的 WorkBuddy 积分分享给其他 AI 工具——
+包括那些**官方压根没支持 WorkBuddy** 的工具。
 
 ```
-  DeepSeek Harness   ┐
-  OpenCode           ├──►  这座桥  ──►  WorkBuddy 积分
-  Cursor / Cline     ┘     （本地运行）      （你自己的账号）
+  DeepSeek Harness   \
+  OpenCode            >  这座桥  -->  WorkBuddy 积分
+  Cursor / Cline     /    （本地运行）     （你的账号，每日免费）
 ```
 
 不上传任何数据，你的凭据不出本机。
@@ -41,14 +41,14 @@
 
 ## 为什么不能直接写个脚本
 
-因为难的从来不是那次 API 调用，而是它周围的一切：
+因为难的从来不是那次API 调用，而是它周围的一切：
 凭据格式、接口真正认的那套请求头、流式行为、每个模型的能力信息，
 以及每个 AI 工具把配置存在哪儿、存成什么格式。
 
 这些工具全包了，然后给你一段能直接粘给 AI 助手的配置说明——
 它照着配完还会**真发一次请求**验证确实通了。
 
-给DeepSeek Harness 还额外配了个插件，装上之后**不用常开这个工具**积分也能用。
+给 DeepSeek Harness 还额外配了个插件，装上之后**不用常开这个工具**积分也能用。
 
 ---
 
