@@ -5,6 +5,19 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Locate `WorkBuddy.exe` when the uninstaller's `DisplayIcon` value carries an icon
+  index suffix (e.g. `D:\Program Files\Tencent\WorkBuddy\WorkBuddy.exe,0`). The
+  suffix made `os.path.isfile()` fail, so the registry lookup always came back empty;
+  an empty `InstallLocation` could likewise produce a bare relative `WorkBuddy.exe`
+  candidate.
+- Scan `<drive>:\Program Files\<vendor>\WorkBuddy\` as a fallback, so installs outside
+  the default directories (e.g. `D:\Program Files\Tencent\WorkBuddy`) are found even
+  when the registry lookup yields nothing.
+
 ## [1.0.0] — 2026-10-07
 
 First public release.

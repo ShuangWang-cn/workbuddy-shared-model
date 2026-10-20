@@ -139,6 +139,15 @@ def base_of(domain: str) -> str:
     return "https://www.workbuddy.ai" if "workbuddy.ai" in (domain or "") else "https://copilot.tencent.com"
 
 
+def _icon_path(di):
+    """DisplayIcon 常写成 "<exe>,0"（逗号后是图标序号），剥掉逗号尾巴才能当文件路径用"""
+    p = str(di or "").strip().strip('"')
+    head, _, idx = p.rpartition(",")
+    if head and idx.strip().lstrip("-").isdigit():
+        p = head.strip().strip('"')
+    return p
+
+
 def _reg_apps():
     """从卸载表里找 WorkBuddy（比猜盘符靠谱，装在哪个盘都能认出来）"""
     try:
@@ -177,11 +186,11 @@ def _reg_apps():
                     il = winreg.QueryValueEx(s, "InstallLocation")[0]
                 except Exception:
                     il = ""
-                if isinstance(di, str) and di.strip() and os.path.isfile(di.strip().strip('"')):
-                    out.append(di.strip().strip('"'))
-                if il:
-                    cand = os.path.join(il, "WorkBuddy.exe")
-                    out.append(cand)
+                p = _icon_path(di)
+                if p and os.path.isfile(p):
+                    out.append(p)
+                if il and os.path.isdir(il):
+                    out.append(os.path.join(il, "WorkBuddy.exe"))
             except Exception:
                 pass
         try:
@@ -220,6 +229,8 @@ def _drive_paths():
             continue
         out.append(root + "WorkBuddy\\WorkBuddy.exe")
         out.append(root + "WorkBuddy\\app\\WorkBuddy.exe")
+        # 厂商子目录布局（如 D:\Program Files\Tencent\WorkBuddy\）：注册表读不到时靠这条兜底
+        out.append(root + "Program Files\\*\\WorkBuddy*\\WorkBuddy.exe")
     return out
 
 
